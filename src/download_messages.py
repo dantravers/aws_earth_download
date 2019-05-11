@@ -15,10 +15,10 @@ def main():
     aws_access_key_id = my_config['aws']['aws_access_key_id']
     aws_secret_access_key = my_config['aws']['aws_secret_access_key']
     mogreps_url = my_config['aws']['mogreps_url']
-    #ukv_url = my_config['aws']['ukv_url']
+    ukv_url = my_config['aws']['ukv_url']
     region_name = my_config['aws']['region_name']
     variables = [x.strip() for x in my_config['aws']['variables'].split(',')]
-    #ukv_store_path = my_config['local_config']['ukv_store_path']
+    ukv_store_path = my_config['local_config']['ukv_store_path']
     mogreps_uk_store_path = my_config['local_config']['mogreps_uk_store_path']
     
     mdf = pd.DataFrame([])
@@ -32,6 +32,11 @@ def main():
     mdf = fetch_messages(mogreps_url, client, variables)
     save_location = os.path.join(mogreps_uk_store_path, \
         'mogreps_sqs_messages_{}.csv'.format(datetime.datetime.now().strftime("%Y-%m-%dT%H-%M")))
+    mdf.to_csv(save_location)
+
+    mdf = fetch_messages(ukv_url, client, variables)
+    save_location = os.path.join(ukv_store_path, \
+        'ukv_sqs_messages_{}.csv'.format(datetime.datetime.now().strftime("%Y-%m-%dT%H-%M")))
     mdf.to_csv(save_location)
 
 if __name__ == "__main__":
