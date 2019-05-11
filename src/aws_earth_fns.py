@@ -7,7 +7,7 @@ def fetch_messages(queue_url, client, variables):
     
     Notes
     -----
-    Takes inputs of the queue url and the variables whose files we want to extract.
+Takes inputs of the queue url and the variables whose files we want to extract.
     The forecast reference times are hardcoded to be all from 0300 inclusive to 1500 (not inclusive).
     The times forecast are hardcoded to be from hour 7 (inclusive) to 19(not inclusive).
     
@@ -21,6 +21,8 @@ def fetch_messages(queue_url, client, variables):
         List of the variables names to extract files for.
     """
 
+    mdf = pd.DataFrame([])
+
     while True:
         resp = client.receive_message(
         QueueUrl= queue_url,
@@ -29,7 +31,7 @@ def fetch_messages(queue_url, client, variables):
             messages = resp['Messages']
         except KeyError:
             print('No messages on the queue!')
-            message_list = []
+            messages = []
             
         # store messages we want:
         for mes in resp['Messages']:
