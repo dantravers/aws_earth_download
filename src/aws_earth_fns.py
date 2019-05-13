@@ -29,27 +29,26 @@ Takes inputs of the queue url and the variables whose files we want to extract.
         MaxNumberOfMessages=10)
         try:
             messages = resp['Messages']
+            # store messages we want:
+            for mes in resp['Messages']:
+                obj = json.loads(json.loads(mes['Body'])['Message'])
+                if (obj['name'] in variables) & \
+                (datetime.datetime.strptime(obj['forecast_reference_time'], "%Y-%m-%dT%H:%M:%SZ").hour in range(3, 15)) & \
+                (datetime.datetime.strptime(obj['time'], "%Y-%m-%dT%H:%M:%SZ").hour in range(7, 19)):
+                    print(obj['name'], obj['forecast_reference_time'], obj['time'], int(obj['forecast_period'])/3600/24)
+                    mdf = mdf.append(pd.DataFrame(obj, index=[mes['MessageId']]))
+            #delete messages in queue which are read
+            entries = [
+            {'Id': msg['MessageId'], 'ReceiptHandle': msg['ReceiptHandle']}
+            for msg in resp['Messages']
+            ]
+            resp = client.delete_message_batch(QueueUrl=queue_url, Entries=entries)
+            if len(resp['Successful']) != len(entries):
+                raise RuntimeError(
+                    f"Failed to delete messages: entries={entries!r} resp={resp!r}"
+                )
         except KeyError:
             print('No messages on the queue!')
             messages = []
             
-        # store messages we want:
-        for mes in resp['Messages']:
-            obj = json.loads(json.loads(mes['Body'])['Message'])
-            if (obj['name'] in variables) & \
-            (datetime.datetime.strptime(obj['forecast_reference_time'], "%Y-%m-%dT%H:%M:%SZ").hour in range(3, 15)) & \
-            (datetime.datetime.strptime(obj['time'], "%Y-%m-%dT%H:%M:%SZ").hour in range(7, 19)):
-                print(obj['name'], obj['forecast_reference_time'], obj['time'], int(obj['forecast_period'])/3600/24)
-                mdf = mdf.append(pd.DataFrame(obj, index=[mes['MessageId']]))
-
-        #delete messages in queue which are read
-        entries = [
-        {'Id': msg['MessageId'], 'ReceiptHandle': msg['ReceiptHandle']}
-        for msg in resp['Messages']
-        ]
-        resp = client.delete_message_batch(QueueUrl=queue_url, Entries=entries)
-        if len(resp['Successful']) != len(entries):
-            raise RuntimeError(
-                f"Failed to delete messages: entries={entries!r} resp={resp!r}"
-            )
     return(mdf)
